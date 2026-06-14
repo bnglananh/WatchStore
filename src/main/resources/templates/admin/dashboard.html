@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-admin}">
+<head>
+    <title>Bảng điều khiển</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <style>
+        /* ===== CHART SECTION ===== */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.8rem;
+            margin-top: 2rem;
+        }
+        .chart-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.8rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            border-radius: var(--radius) var(--radius) 0 0;
+        }
+        .chart-card.revenue::before   { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+        .chart-card.status::before    { background: linear-gradient(90deg, #f97316, #fbbf24); }
+        .chart-card.topsell::before   { background: linear-gradient(90deg, #10b981, #06b6d4); }
+        .chart-card.category::before  { background: linear-gradient(90deg, #ec4899, #f43f5e); }
+        .chart-card.users::before     { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+
+        .chart-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-card-header .chart-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; color: white;
+        }
+        .revenue   .chart-icon { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+        .status    .chart-icon { background: linear-gradient(135deg,#f97316,#fbbf24); }
+        .topsell   .chart-icon { background: linear-gradient(135deg,#10b981,#06b6d4); }
+        .category  .chart-icon { background: linear-gradient(135deg,#ec4899,#f43f5e); }
+        .users     .chart-icon { background: linear-gradient(135deg,#3b82f6,#06b6d4); }
+
+        .chart-card-header h3 {
+            font-size: 1rem; font-weight: 600; color: var(--text); margin: 0;
+        }
+        .chart-card-header small {
+            font-size: 0.8rem; color: var(--text-muted); display: block;
+        }
+        .chart-wrapper { position: relative; height: 260px; }
+
+        /* Stat cards redesign */
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.6rem 1.8rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            display: flex; align-items: center; gap: 1.2rem;
+            position: relative; overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .stat-box:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+        .stat-icon {
+            width: 54px; height: 54px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; color: white; flex-shrink: 0;
+        }
+        .stat-box:nth-child(1) .stat-icon { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .stat-box:nth-child(2) .stat-icon { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .stat-box:nth-child(3) .stat-icon { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+        .stat-box:nth-child(4) .stat-icon { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+        .stat-content { flex: 1; }
+        .stat-title { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; margin-bottom: 0.3rem; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .stat-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+        @media (max-width: 1100px) {
+            .chart-grid { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 640px) {
+            .stats { grid-template-columns: 1fr; }
+        }
+
+        /* Topbar */
+        .topbar { background: linear-gradient(135deg, #1e293b 0%, #2d3a4f 100%); }
+
+        /* ===== WAREHOUSE COMMAND CENTER ===== */
+        .inv-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+        }
+        .inv-metric-card {
+            background: var(--surface);
+            padding: 1.3rem 1.6rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .inv-metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+        .inv-metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            flex-shrink: 0;
+        }
+        .inv-metric-card:nth-child(1) .inv-metric-icon { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .inv-metric-card:nth-child(2) .inv-metric-icon { background: linear-gradient(135deg, #10b981, #059669); }
+        .inv-metric-card:nth-child(3) .inv-metric-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .inv-metric-card:nth-child(4) .inv-metric-icon { background: linear-gradient(135deg, #ec4899, #db2777); }
+        
+        .inv-metric-info { flex: 1; }
+        .inv-metric-val { font-size: 1.5rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+        .inv-metric-lbl { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; margin-top: 0.2rem; }
+
+        .inv-controls {
+            background: var(--surface);
+            padding: 1.2rem 1.6rem;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.2rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow);
+        }
+        .inv-search-wrapper {
+            position: relative;
+            flex: 1;
+            min-width: 260px;
+        }
+        .inv-search-input {
+            width: 100%;
+            padding: 12px 16px 12px 42px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.92rem;
+            font-family: var(--font-main);
+            transition: all 0.3s;
+            background: #fdfefe;
+        }
+        .inv-search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        .inv-search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .inv-filters {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+        .inv-filter-select {
+            padding: 11px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-family: var(--font-main);
+            outline: none;
+            transition: all 0.3s;
+            background: white;
+            cursor: pointer;
+            color: var(--text);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.1rem;
+            padding-right: 2.8rem;
+        }
+        .inv-filter-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+        .inv-sort-btn {
+            padding: 11px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: white;
+            font-size: 0.9rem;
+            font-family: var(--font-main);
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+            color: var(--text);
+        }
+        .inv-sort-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .inv-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.8rem;
+        }
+        .inv-tab-btn {
+            padding: 12px 22px;
+            font-size: 0.95rem;
+            font-family: var(--font-main);
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            position: relative;
+            transition: color 0.3s, background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 10px 10px 0 0;
+        }
+        .inv-tab-btn:hover {
+            color: var(--primary);
+            background: rgba(99, 102, 241, 0.03);
+        }
+        .inv-tab-btn.active {
+            color: var(--primary);
+        }
+        .inv-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px 3px 0 0;
+        }
+        .inv-tab-content {
+            display: none;
+        }
+        .inv-tab-content.active {
+            display: block;
+            animation: invFadeIn 0.35s ease-out;
+        }
+        @keyframes invFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .inv-chart-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+        .inv-chart-wrapper {
+            position: relative;
+            width: 100%;
+            height: auto;
+            min-height: 400px;
+        }
+        .chart-no-data {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 350px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            gap: 1rem;
+        }
+        .chart-no-data i {
+            font-size: 3rem;
+            background: linear-gradient(135deg, #94a3b8, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- TOP BANNER -->
+    <div class="topbar">
+        <div>
+            <h1><i class="fas fa-chart-line" style="color:#fb923c;margin-right:0.5rem;"></i>Bảng điều khiển</h1>
+            <p style="color:rgba(255,255,255,0.6);font-size:0.9rem;margin-top:0.3rem;">Tổng quan kinh doanh Watch Store</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+            <div class="badge" id="current-date" style="background:rgba(255,255,255,0.12);color:white;border:1px solid rgba(255,255,255,0.2);padding:8px 16px;border-radius:20px;">Date</div>
+        </div>
+        <script>document.getElementById('current-date').textContent = new Date().toLocaleDateString('vi-VN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});</script>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats">
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-coins"></i></div>
+            <div class="stat-content">
+                <div class="stat-title">Doanh thu hoàn thành</div>
+                <div class="stat-value" th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0</div>
+                <div class="stat-sub"><i class="fas fa-check-circle" style="color:#22c55e;"></i> Từ đơn hàng Hoàn thành</div>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+            <div class="stat-content">
+                <div class="stat-title">Đơn hàng mới</div>
+                <div class="stat-value" th:text="${newOrders}">0</div>
+                <div class="stat-sub"><i class="fas fa-clock" style="color:#f97316;"></i> Đang chờ xử lý</div>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-content">
+                <div class="stat-title">Tổng khách hàng</div>
+                <div class="stat-value" th:text="${totalUsers}">0</div>
+                <div class="stat-sub"><i class="fas fa-user-plus" style="color:#6366f1;"></i> Thành viên đã đăng ký</div>
+            </div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-icon"><i class="fas fa-watch"></i></div>
+            <div class="stat-content">
+                <div class="stat-title">Tổng sản phẩm</div>
+                <div class="stat-value" th:text="${totalProducts}">0</div>
+                <div class="stat-sub"><i class="fas fa-box" style="color:#0ea5e9;"></i> Sản phẩm trong kho</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOW STOCK WARNING -->
+    <div class="card" th:if="${!lowStockProducts.isEmpty()}" style="border-left: 4px solid #ef4444; background: linear-gradient(135deg,#fff5f5,#fff);">
+        <h2 style="color:#ef4444;border-color:#fca5a5;">
+            <i class="fas fa-exclamation-triangle"></i> Cảnh báo hàng sắp hết
+        </h2>
+        <p style="color:var(--text-muted);margin-bottom:1rem;">Các sản phẩm dưới đây có số lượng tồn kho &lt; 5 đơn vị.</p>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th>Tồn kho</th>
+                        <th>Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="product : ${lowStockProducts}">
+                        <td th:text="${product.name}">Product Name</td>
+                        <td>
+                            <span class="badge danger" th:text="${product.stock}">0</span>
+                        </td>
+                        <td>
+                            <a th:href="@{/admin/products/edit/{id}(id=${product.id})}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> Nhập hàng
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CHART SECTION TITLE -->
+    <div style="margin-top:2rem;margin-bottom:1rem;display:flex;align-items:center;gap:0.8rem;">
+        <div style="width:4px;height:28px;background:linear-gradient(180deg,#6366f1,#8b5cf6);border-radius:4px;"></div>
+        <h2 style="font-size:1.3rem;color:var(--text);margin:0;">Phân tích &amp; Thống kê</h2>
+        <span style="font-size:0.85rem;color:var(--text-muted);margin-left:0.3rem;">Tổng quan dữ liệu kinh doanh</span>
+    </div>
+
+    <!-- 4 CHARTS GRID -->
+    <div class="chart-grid">
+
+        <!-- Chart 1: Revenue Bar -->
+        <div class="chart-card revenue">
+            <div class="chart-card-header">
+                <div class="chart-icon"><i class="fas fa-chart-bar"></i></div>
+                <div>
+                    <h3>Doanh thu theo tháng</h3>
+                    <small>6 tháng gần nhất (đơn hoàn thành)</small>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 2: Order Status Doughnut -->
+        <div class="chart-card status">
+            <div class="chart-card-header">
+                <div class="chart-icon"><i class="fas fa-chart-pie"></i></div>
+                <div>
+                    <h3>Trạng thái đơn hàng</h3>
+                    <small>Phân bổ theo tình trạng xử lý</small>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 3: Top Products Horizontal Bar -->
+        <div class="chart-card topsell">
+            <div class="chart-card-header">
+                <div class="chart-icon"><i class="fas fa-trophy"></i></div>
+                <div>
+                    <h3>Top sản phẩm bán chạy</h3>
+                    <small>5 sản phẩm có số lượng đặt nhiều nhất</small>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="topProductsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 4: Category Pie -->
+        <div class="chart-card category">
+            <div class="chart-card-header">
+                <div class="chart-icon"><i class="fas fa-tags"></i></div>
+                <div>
+                    <h3>Sản phẩm theo danh mục</h3>
+                    <small>Phân bổ số lượng sản phẩm</small>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 5: User Provider Distribution -->
+        <div class="chart-card users">
+            <div class="chart-card-header">
+                <div class="chart-icon"><i class="fas fa-user-check"></i></div>
+                <div>
+                    <h3>Phương thức đăng ký</h3>
+                    <small>Phân bổ theo Local/Google/Facebook</small>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="userProviderChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRODUCT INVENTORY MANAGEMENT CENTER -->
+    <div style="margin-top:2.5rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.8rem;">
+        <div style="width:4px;height:28px;background:linear-gradient(180deg,#10b981,#06b6d4);border-radius:4px;"></div>
+        <h2 style="font-size:1.4rem;color:var(--text);margin:0;font-weight:700;">Quản lý kho hàng</h2>
+        <span style="font-size:0.88rem;color:var(--text-muted);margin-left:0.3rem;">Bảng điều khiển &amp; phân tích tồn kho thực tế</span>
+    </div>
+
+    <!-- Inventory Quick Metrics -->
+    <div class="inv-metrics">
+        <div class="inv-metric-card">
+            <div class="inv-metric-icon"><i class="fas fa-boxes"></i></div>
+            <div class="inv-metric-info">
+                <div class="inv-metric-val" id="metricDistinctProducts">0</div>
+                <div class="inv-metric-lbl">Mặt sản phẩm</div>
+            </div>
+        </div>
+        <div class="inv-metric-card">
+            <div class="inv-metric-icon"><i class="fas fa-warehouse"></i></div>
+            <div class="inv-metric-info">
+                <div class="inv-metric-val" id="metricTotalStock">0</div>
+                <div class="inv-metric-lbl">Tổng lượng tồn kho</div>
+            </div>
+        </div>
+        <div class="inv-metric-card">
+            <div class="inv-metric-icon"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="inv-metric-info">
+                <div class="inv-metric-val" id="metricCapitalValue">0 ₫</div>
+                <div class="inv-metric-lbl">Giá trị vốn kho</div>
+            </div>
+        </div>
+        <div class="inv-metric-card">
+            <div class="inv-metric-icon"><i class="fas fa-check-double"></i></div>
+            <div class="inv-metric-info">
+                <div class="inv-metric-val" id="metricAvailabilityRate">0%</div>
+                <div class="inv-metric-lbl">Tỷ lệ hàng sẵn có</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Controls -->
+    <div class="inv-controls">
+        <div class="inv-search-wrapper">
+            <i class="fas fa-search inv-search-icon"></i>
+            <input type="text" id="invSearchInput" class="inv-search-input" placeholder="Tìm sản phẩm theo tên, thương hiệu, ID...">
+        </div>
+        <div class="inv-filters">
+            <!-- Category Filter Dropdown -->
+            <select id="invCategoryFilter" class="inv-filter-select">
+                <option value="ALL">Tất cả danh mục</option>
+                <!-- Dynamic categories loaded by JS -->
+            </select>
+            <!-- Stock Status Filter Dropdown -->
+            <select id="invStockFilter" class="inv-filter-select">
+                <option value="ALL">Tất cả tồn kho</option>
+                <option value="OUT">Đã hết hàng (0)</option>
+                <option value="LOW">Sắp hết hàng (&lt; 5)</option>
+                <option value="WARN">Tồn kho thấp (&lt; 20)</option>
+                <option value="GOOD">Hàng dồi dào (&gt;= 20)</option>
+            </select>
+            <!-- Sort Trigger -->
+            <button id="invSortBtn" class="inv-sort-btn" data-sort="stock-desc">
+                <i class="fas fa-sort-amount-down"></i> Tồn kho: Giảm dần
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="inv-tabs">
+        <button class="inv-tab-btn active" onclick="switchInvTab('chart', this)">
+            <i class="fas fa-chart-bar"></i> Biểu đồ trực quan
+        </button>
+        <button class="inv-tab-btn" onclick="switchInvTab('table', this)">
+            <i class="fas fa-list-ul"></i> Bảng chi tiết
+        </button>
+    </div>
+
+    <!-- Tab Contents -->
+    <!-- Tab 1: Chart View -->
+    <div id="invChartTab" class="inv-tab-content active">
+        <div class="inv-chart-card">
+            <div class="inv-chart-wrapper" id="invChartWrapper">
+                <canvas id="inventoryChart"></canvas>
+            </div>
+            <div id="invChartNoData" style="display: none;" class="chart-no-data">
+                <i class="fas fa-box-open"></i>
+                <p style="font-weight: 500; margin-top: 0.5rem;">Không tìm thấy sản phẩm nào khớp với bộ lọc</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 2: Table View -->
+    <div id="invTableTab" class="inv-tab-content">
+        <div class="card" style="padding:0; border:none; box-shadow:none; margin-bottom:0;">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table">
+                    <thead style="position: sticky; top: 0; background: var(--surface); z-index: 10;">
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th style="width: 100px;">Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Thương hiệu</th>
+                            <th>Danh mục</th>
+                            <th>Giá bán</th>
+                            <th style="width: 120px;">Tồn kho</th>
+                            <th style="width: 150px;">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <!-- Filled dynamically by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="invTableNoData" style="display: none; padding: 3rem;" class="chart-no-data">
+                <i class="fas fa-box-open"></i>
+                <p style="font-weight: 500; margin-top: 0.5rem;">Không tìm thấy sản phẩm nào khớp với bộ lọc</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHART SCRIPTS -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const monthLabels    = /*[[${monthLabels}]]*/ [];
+        const monthlyRevenue = /*[[${monthlyRevenue}]]*/ [];
+        const statusLabels   = /*[[${statusLabels}]]*/ [];
+        const statusCounts   = /*[[${statusCounts}]]*/ [];
+        const topNames       = /*[[${topProductNames}]]*/ [];
+        const topSales       = /*[[${topProductSales}]]*/ [];
+        const catNames       = /*[[${categoryNames}]]*/ [];
+        const catCounts      = /*[[${categoryCounts}]]*/ [];
+        const userLabels     = /*[[${userProviderLabels}]]*/ [];
+        const userCounts     = /*[[${userProviderCounts}]]*/ [];
+
+        Chart.defaults.font.family = "'Poppins', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        // ── Chart 1: Revenue Bar ──────────────────────────────────────────
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'bar',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Doanh thu (₫)',
+                    data: monthlyRevenue,
+                    backgroundColor: (ctx) => {
+                        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 260);
+                        g.addColorStop(0, 'rgba(99,102,241,0.85)');
+                        g.addColorStop(1, 'rgba(139,92,246,0.2)');
+                        return g;
+                    },
+                    borderColor: '#6366f1',
+                    borderWidth: 2,
+                    borderRadius: 10,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ' ' + Number(ctx.parsed.y).toLocaleString('vi-VN') + ' ₫'
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, border: { display: false } },
+                    y: {
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        border: { display: false },
+                        ticks: { callback: v => (v >= 1e6 ? (v/1e6).toFixed(0)+'M' : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v) + '₫' }
+                    }
+                }
+            }
+        });
+
+        // ── Chart 2: Status Doughnut ──────────────────────────────────────
+        const statusColors = ['#f97316','#6366f1','#0ea5e9','#22c55e','#ef4444'];
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: statusLabels,
+                datasets: [{
+                    data: statusCounts,
+                    backgroundColor: statusColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } }
+                    },
+                    tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + ' đơn' } }
+                }
+            }
+        });
+
+        // ── Chart 3: Top Products Horizontal Bar ──────────────────────────
+        const topColors = ['rgba(16,185,129,0.85)','rgba(6,182,212,0.8)','rgba(99,102,241,0.8)','rgba(251,146,60,0.8)','rgba(236,72,153,0.8)'];
+        new Chart(document.getElementById('topProductsChart'), {
+            type: 'bar',
+            data: {
+                labels: topNames.length ? topNames : ['Chưa có dữ liệu'],
+                datasets: [{
+                    label: 'Số lượng bán',
+                    data: topSales.length ? topSales : [0],
+                    backgroundColor: topColors,
+                    borderColor: topColors.map(c => c.replace('0.8','1').replace('0.85','1')),
+                    borderWidth: 2,
+                    borderRadius: 8,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => '  ' + ctx.parsed.x + ' sản phẩm' } }
+                },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(0,0,0,0.04)' },
+                        border: { display: false },
+                        ticks: { precision: 0 }
+                    },
+                    y: { grid: { display: false }, border: { display: false } }
+                }
+            }
+        });
+
+        // ── Chart 4: Category Pie ─────────────────────────────────────────
+        const catColors = ['#ec4899','#f43f5e','#f97316','#fbbf24','#a78bfa','#60a5fa','#34d399'];
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'pie',
+            data: {
+                labels: catNames.length ? catNames : ['Chưa có dữ liệu'],
+                datasets: [{
+                    data: catCounts.length ? catCounts : [1],
+                    backgroundColor: catColors.slice(0, catNames.length || 1),
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 14, usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } }
+                    },
+                    tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + ' sản phẩm' } }
+                }
+            }
+        });
+
+        // ── Chart 5: User Provider Chart ─────────────────────────────────
+        new Chart(document.getElementById('userProviderChart'), {
+            type: 'polarArea',
+            data: {
+                labels: userLabels,
+                datasets: [{
+                    data: userCounts,
+                    backgroundColor: ['rgba(59,130,246,0.6)', 'rgba(239,68,68,0.6)', 'rgba(16,185,129,0.6)', 'rgba(245,158,11,0.6)'],
+                    borderColor: ['#3b82f6', '#ef4444', '#10b981', '#f59e0b'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        ticks: { display: false },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: { padding: 14, usePointStyle: true, pointStyleWidth: 10, font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // ── WAREHOUSE COMMAND CENTER JAVASCRIPT ──────────────────────────────────
+        const rawProducts = /*[[${inventoryData}]]*/ [];
+        let filteredProducts = [...rawProducts];
+        let inventoryChartInstance = null;
+
+        // Populate Category Filter dropdown
+        function initCategoryFilter() {
+            const categories = new Set();
+            rawProducts.forEach(p => {
+                if (p.category) categories.add(p.category);
+            });
+            const filterSelect = document.getElementById('invCategoryFilter');
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                filterSelect.appendChild(opt);
+            });
+        }
+
+        // Switch Tab functionality
+        window.switchInvTab = function(tabName, btnElement) {
+            // Remove active classes
+            document.querySelectorAll('.inv-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.inv-tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active classes
+            btnElement.classList.add('active');
+            if (tabName === 'chart') {
+                document.getElementById('invChartTab').classList.add('active');
+                // Redraw chart to handle resizing bugs
+                setTimeout(renderInventoryChart, 100);
+            } else {
+                document.getElementById('invTableTab').classList.add('active');
+            }
+        }
+
+        // Calculate and Render Metrics Cards
+        function updateMetrics() {
+            const distinctProducts = filteredProducts.length;
+            let totalStock = 0;
+            let totalCapitalValue = 0;
+            let inStockCount = 0;
+
+            filteredProducts.forEach(p => {
+                const stock = p.stock || 0;
+                totalStock += stock;
+                totalCapitalValue += stock * (p.price || 0);
+                if (stock > 0) inStockCount++;
+            });
+
+            const availabilityRate = distinctProducts > 0 ? Math.round((inStockCount / distinctProducts) * 100) : 0;
+
+            document.getElementById('metricDistinctProducts').textContent = distinctProducts.toLocaleString('vi-VN');
+            document.getElementById('metricTotalStock').textContent = totalStock.toLocaleString('vi-VN');
+            document.getElementById('metricCapitalValue').textContent = totalCapitalValue.toLocaleString('vi-VN') + ' ₫';
+            document.getElementById('metricAvailabilityRate').textContent = availabilityRate + '%';
+        }
+
+        // Filter and Sort Data
+        function applyFilters() {
+            const searchQuery = document.getElementById('invSearchInput').value.trim().toLowerCase();
+            const selectedCategory = document.getElementById('invCategoryFilter').value;
+            const selectedStockLevel = document.getElementById('invStockFilter').value;
+            const sortMode = document.getElementById('invSortBtn').getAttribute('data-sort');
+
+            // 1. Filter
+            filteredProducts = rawProducts.filter(p => {
+                // Search query match
+                const matchesSearch = !searchQuery || 
+                    String(p.id).includes(searchQuery) ||
+                    (p.name && p.name.toLowerCase().includes(searchQuery)) ||
+                    (p.brand && p.brand.toLowerCase().includes(searchQuery)) ||
+                    (p.category && p.category.toLowerCase().includes(searchQuery));
+
+                // Category match
+                const matchesCategory = selectedCategory === 'ALL' || p.category === selectedCategory;
+
+                // Stock match
+                let matchesStock = true;
+                const stock = p.stock || 0;
+                if (selectedStockLevel === 'OUT') matchesStock = (stock === 0);
+                else if (selectedStockLevel === 'LOW') matchesStock = (stock > 0 && stock < 5);
+                else if (selectedStockLevel === 'WARN') matchesStock = (stock >= 5 && stock < 20);
+                else if (selectedStockLevel === 'GOOD') matchesStock = (stock >= 20);
+
+                return matchesSearch && matchesCategory && matchesStock;
+            });
+
+            // 2. Sort
+            if (sortMode === 'stock-asc') {
+                filteredProducts.sort((a, b) => (a.stock || 0) - (b.stock || 0));
+            } else if (sortMode === 'stock-desc') {
+                filteredProducts.sort((a, b) => (b.stock || 0) - (a.stock || 0));
+            } else if (sortMode === 'name-asc') {
+                filteredProducts.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            } else if (sortMode === 'name-desc') {
+                filteredProducts.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+            }
+
+            // 3. Update DOM
+            updateMetrics();
+            renderInventoryChart();
+            renderInventoryTable();
+        }
+
+        // Render Inventory Chart.js
+        function renderInventoryChart() {
+            const ctx = document.getElementById('inventoryChart');
+            const wrapper = document.getElementById('invChartWrapper');
+            const noDataEl = document.getElementById('invChartNoData');
+
+            // Destroy previous chart instance
+            if (inventoryChartInstance) {
+                inventoryChartInstance.destroy();
+                inventoryChartInstance = null;
+            }
+
+            if (filteredProducts.length === 0) {
+                ctx.style.display = 'none';
+                noDataEl.style.display = 'flex';
+                wrapper.style.height = '350px';
+                return;
+            }
+
+            ctx.style.display = 'block';
+            noDataEl.style.display = 'none';
+
+            // Calculate dynamic height based on product count (36px per bar + 60px padding)
+            const calculatedHeight = Math.max(350, filteredProducts.length * 36 + 60);
+            wrapper.style.height = calculatedHeight + 'px';
+
+            const labels = filteredProducts.map(p => p.name);
+            const stockValues = filteredProducts.map(p => p.stock || 0);
+
+            // Get background & border colors based on stock level
+            const backgroundColors = [];
+            const borderColors = [];
+
+            filteredProducts.forEach(p => {
+                const stock = p.stock || 0;
+                if (stock === 0) {
+                    backgroundColors.push('rgba(100, 116, 139, 0.82)');
+                    borderColors.push('#64748b');
+                } else if (stock < 5) {
+                    backgroundColors.push('rgba(239, 68, 68, 0.85)');
+                    borderColors.push('#ef4444');
+                } else if (stock < 20) {
+                    backgroundColors.push('rgba(245, 158, 11, 0.85)');
+                    borderColors.push('#f59e0b');
+                } else {
+                    backgroundColors.push('rgba(16, 185, 129, 0.85)');
+                    borderColors.push('#10b981');
+                }
+            });
+
+            inventoryChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Số lượng tồn kho',
+                        data: stockValues,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
+                        borderRadius: 6,
+                        barThickness: 18,
+                        maxBarThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                            titleFont: { family: "'Poppins', sans-serif", size: 13, weight: '600' },
+                            bodyFont: { family: "'Poppins', sans-serif", size: 12 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const product = filteredProducts[index];
+                                    const formattedPrice = (product.price || 0).toLocaleString('vi-VN') + ' ₫';
+                                    const totalValue = ((product.stock || 0) * (product.price || 0)).toLocaleString('vi-VN') + ' ₫';
+                                    
+                                    return [
+                                        ` Tồn kho: ${product.stock} chiếc`,
+                                        ` Thương hiệu: ${product.brand || 'Khác'}`,
+                                        ` Danh mục: ${product.category || 'Chưa phân loại'}`,
+                                        ` Đơn giá: ${formattedPrice}`,
+                                        ` Giá trị kho: ${totalValue}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(0,0,0,0.04)' },
+                            border: { display: false },
+                            ticks: { precision: 0, font: { size: 11 } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            border: { display: false },
+                            ticks: {
+                                font: { size: 11, weight: '500' },
+                                callback: function(value, index) {
+                                    const name = labels[index];
+                                    return name && name.length > 25 ? name.substring(0, 25) + '...' : name;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const productId = filteredProducts[index].id;
+                            window.open(`/admin/products/edit/${productId}`, '_blank');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Inventory Table rows
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventoryTableBody');
+            const noDataEl = document.getElementById('invTableNoData');
+            
+            tbody.innerHTML = '';
+
+            if (filteredProducts.length === 0) {
+                noDataEl.style.display = 'block';
+                return;
+            }
+
+            noDataEl.style.display = 'none';
+
+            filteredProducts.forEach(p => {
+                const tr = document.createElement('tr');
+                
+                // 1. ID
+                const tdId = document.createElement('td');
+                tdId.textContent = p.id;
+                tr.appendChild(tdId);
+
+                // 2. Image
+                const tdImg = document.createElement('td');
+                if (p.image) {
+                    const img = document.createElement('img');
+                    img.src = `/images/${p.image}`;
+                    img.alt = p.name;
+                    img.style.width = '40px';
+                    img.style.height = '40px';
+                    img.style.borderRadius = '6px';
+                    img.style.objectFit = 'cover';
+                    tdImg.appendChild(img);
+                } else {
+                    tdImg.textContent = '';
+                }
+                tr.appendChild(tdImg);
+
+                // 3. Name
+                const tdName = document.createElement('td');
+                tdName.style.fontWeight = '500';
+                tdName.textContent = p.name;
+                tr.appendChild(tdName);
+
+                // 4. Brand
+                const tdBrand = document.createElement('td');
+                tdBrand.textContent = p.brand || 'Khác';
+                tr.appendChild(tdBrand);
+
+                // 5. Category
+                const tdCat = document.createElement('td');
+                tdCat.textContent = p.category || 'Chưa phân loại';
+                tr.appendChild(tdCat);
+
+                // 6. Price
+                const tdPrice = document.createElement('td');
+                tdPrice.textContent = (p.price || 0).toLocaleString('vi-VN') + ' ₫';
+                tr.appendChild(tdPrice);
+
+                // 7. Stock Badge
+                const tdStock = document.createElement('td');
+                const badge = document.createElement('span');
+                const stock = p.stock || 0;
+                
+                if (stock === 0) {
+                    badge.className = 'badge danger';
+                } else if (stock < 5) {
+                    badge.className = 'badge danger';
+                } else if (stock < 20) {
+                    badge.className = 'badge warning';
+                } else {
+                    badge.className = 'badge success';
+                }
+                badge.textContent = stock;
+                tdStock.appendChild(badge);
+                tr.appendChild(tdStock);
+
+                // 8. Status & Edit Link
+                const tdActions = document.createElement('td');
+                
+                const statusSpan = document.createElement('span');
+                if (stock > 0) {
+                    statusSpan.className = 'text-success';
+                    statusSpan.style.fontSize = '0.85rem';
+                    statusSpan.style.marginRight = '0.8rem';
+                    statusSpan.innerHTML = '<i class="fas fa-check-circle"></i> Còn hàng';
+                } else {
+                    statusSpan.className = 'text-danger';
+                    statusSpan.style.fontSize = '0.85rem';
+                    statusSpan.style.marginRight = '0.8rem';
+                    statusSpan.innerHTML = '<i class="fas fa-times-circle"></i> Hết hàng';
+                }
+                tdActions.appendChild(statusSpan);
+
+                const editBtn = document.createElement('a');
+                editBtn.href = `/admin/products/edit/${p.id}`;
+                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.style.padding = '5px 10px';
+                editBtn.style.fontSize = '0.78rem';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.title = 'Chỉnh sửa sản phẩm / Nhập hàng';
+                tdActions.appendChild(editBtn);
+
+                tr.appendChild(tdActions);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Setup live filters event listeners
+        function setupEventListeners() {
+            document.getElementById('invSearchInput').addEventListener('input', applyFilters);
+            document.getElementById('invCategoryFilter').addEventListener('change', applyFilters);
+            document.getElementById('invStockFilter').addEventListener('change', applyFilters);
+
+            // Sort Toggle button
+            const sortBtn = document.getElementById('invSortBtn');
+            sortBtn.addEventListener('click', () => {
+                const currentSort = sortBtn.getAttribute('data-sort');
+                
+                if (currentSort === 'stock-desc') {
+                    sortBtn.setAttribute('data-sort', 'stock-asc');
+                    sortBtn.innerHTML = '<i class="fas fa-sort-amount-up"></i> Tồn kho: Tăng dần';
+                } else if (currentSort === 'stock-asc') {
+                    sortBtn.setAttribute('data-sort', 'name-asc');
+                    sortBtn.innerHTML = '<i class="fas fa-sort-alpha-down"></i> Tên: A-Z';
+                } else if (currentSort === 'name-asc') {
+                    sortBtn.setAttribute('data-sort', 'name-desc');
+                    sortBtn.innerHTML = '<i class="fas fa-sort-alpha-up"></i> Tên: Z-A';
+                } else {
+                    sortBtn.setAttribute('data-sort', 'stock-desc');
+                    sortBtn.innerHTML = '<i class="fas fa-sort-amount-down"></i> Tồn kho: Giảm dần';
+                }
+                applyFilters();
+            });
+        }
+
+        // On Page Load
+        document.addEventListener('DOMContentLoaded', () => {
+            initCategoryFilter();
+            setupEventListeners();
+            applyFilters();
+        });
+        /*]]>*/
+    </script>
+</div>
+</body>
+</html>

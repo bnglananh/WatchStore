@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title layout:title-pattern="$CONTENT_TITLE - Admin">Watch Shop Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/admin-style.css}">
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="top-navbar">
+        <a th:href="@{/admin/products}" class="logo">
+            <i class="fas fa-clock"></i> Watch Admin
+        </a>
+
+        <div class="menu">
+            <a th:href="@{/admin/dashboard}" data-path="/admin/dashboard">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+            <a th:href="@{/admin/products}" data-path="/admin/products">
+                <i class="fas fa-watch"></i> Sản phẩm
+            </a>
+            <a th:href="@{/admin/categories}" data-path="/admin/categories">
+                <i class="fas fa-tags"></i> Danh mục
+            </a>
+            <a th:href="@{/admin/orders}" data-path="/admin/orders">
+                <i class="fas fa-shopping-bag"></i> Đơn hàng
+            </a>
+            <a th:href="@{/admin/users}" data-path="/admin/users">
+                <i class="fas fa-users"></i> Người dùng
+            </a>
+            <a th:href="@{/admin/reviews}" data-path="/admin/reviews">
+                <i class="fas fa-comments"></i> Đánh giá
+            </a>
+            <a th:href="@{/admin/coupons}" data-path="/admin/coupons">
+                <i class="fas fa-ticket-alt"></i> Mã giảm giá
+            </a>
+            <a th:href="@{/user/products}" target="_blank">
+                <i class="fas fa-store"></i> Xem cửa hàng
+            </a>
+        </div>
+
+        <div class="user-profile">
+            <i class="fas fa-user-shield"></i>
+            <span sec:authentication="name">Admin</span>
+            <form th:action="@{/logout}" method="post" style="display:inline;margin-left:0.5rem;">
+                <button type="submit" class="logout-btn" title="Đăng xuất">
+                    <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="main" layout:fragment="content">
+        <!-- Content injected here -->
+    </main>
+
+    <script>
+        // Highlight active menu item based on current URL
+        document.querySelectorAll('.menu a[data-path]').forEach(function(link) {
+            if (window.location.pathname.indexOf(link.getAttribute('data-path')) !== -1) {
+                link.classList.add('active');
+            }
+        });
+    </script>
+
+</body>
+</html>

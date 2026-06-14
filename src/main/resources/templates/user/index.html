@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-user}">
+
+<head>
+    <title>Trang chủ | WATCH - Đồng hồ cao cấp</title>
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+            border-radius: 0 0 50px 50px;
+            margin-bottom: 50px;
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .section-title h2 {
+            font-size: 1.6rem;
+            color: #fff;
+            display: inline-block;
+            background: #1a1a2e;
+            padding: 15px 40px;
+            position: relative;
+            z-index: 2;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 800;
+            border: 2px solid #1a1a2e;
+        }
+
+        .section-title h2::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #1a1a2e;
+            z-index: -1;
+        }
+
+        .promo-badge {
+            background: var(--accent);
+            color: #cd0000;
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            margin-left: 20px;
+            vertical-align: middle;
+            font-weight: 900;
+            letter-spacing: 1px;
+            display: inline-block;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: #eee;
+            z-index: 1;
+        }
+
+        .category-scroll {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #1a1a2e #f8f9fa;
+            scroll-behavior: smooth;
+        }
+
+        .category-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .category-scroll::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .category-scroll::-webkit-scrollbar-thumb {
+            background: #1a1a2e;
+            border-radius: 10px;
+        }
+
+        .category-card {
+            flex: 0 0 160px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 25px 20px;
+            border-radius: 16px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            color: #ffffff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid #2a2a4e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card i {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #ffffff;
+            transition: all 0.4s ease;
+            background: rgba(255, 255, 255, 0.1);
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .category-card span {
+            font-weight: 600;
+            font-size: 1.05rem;
+            position: relative;
+            z-index: 2;
+            color: #ffffff;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff4757 0%, #c0392b 100%);
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 1;
+        }
+
+        .category-card:hover {
+            color: white;
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(255, 71, 87, 0.3);
+            border-color: transparent;
+        }
+
+        .category-card:hover::before {
+            opacity: 1;
+        }
+
+        .category-card:hover i {
+            color: white;
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(1.1) rotate(5deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Hero Section -->
+        <div class="hero-section fade-in">
+            <div class="container">
+                <h1 style="color: #f8f9fa;">Thời Gian Là Nghệ Thuật</h1>
+                <p style="font-size: 1.2rem; opacity: 0.8; max-width: 600px; margin: 0 auto 30px;">
+                    Khám phá những tuyệt tác đồng hồ tinh tế, khẳng định đẳng cấp và phong cách riêng của bạn.
+                </p>
+                <a th:href="@{/products}" class="btn-checkout"
+                    style="width: auto; padding: 15px 40px; font-size: 1.1rem;">
+                    Mua Sắm Ngay <i class="fas fa-arrow-right" style="margin-left: 10px;"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Categories -->
+            <div class="section-title" style="margin-bottom: 30px; margin-top: -20px;">
+                <h2>Danh Mục Nổi Bật</h2>
+            </div>
+            <div class="category-scroll">
+                <a th:each="cat : ${categories}" th:href="@{/products(categoryId=${cat.id})}" class="category-card">
+                    <i class="fas fa-user-tie" th:if="${#strings.containsIgnoreCase(cat.name, 'nam')}"></i>
+                    <i class="fas fa-female" th:if="${#strings.containsIgnoreCase(cat.name, 'nữ')}"></i>
+                    <i class="fas fa-running" th:if="${#strings.containsIgnoreCase(cat.name, 'thể thao')}"></i>
+                    <i class="fas fa-clock"
+                        th:if="${!#strings.containsIgnoreCase(cat.name, 'nam') and !#strings.containsIgnoreCase(cat.name, 'nữ') and !#strings.containsIgnoreCase(cat.name, 'thể thao')}"></i>
+                    <span th:text="${cat.name}">Danh mục</span>
+                </a>
+            </div>
+
+            <!-- Featured Products -->
+            <section style="margin-top: 60px;" th:if="${!featuredProducts.isEmpty()}">
+                <div class="section-title">
+                    <h2><i class="fas fa-star" style="color: #ffd700;"></i> Sản Phẩm Nổi Bật</h2>
+                </div>
+                <div class="product-grid">
+                    <div th:each="product : ${featuredProducts}" class="product-card">
+                        <div class="product-img-wrap">
+                            <a th:href="@{/products/detail/{id}(id=${product.id})}">
+                                <img th:src="@{'/images/' + ${product.image}}" class="product-image"
+                                    th:alt="${product.name}" onerror="this.src='/images/default-watch.jpg'">
+                            </a>
+                            <span class="badge"
+                                style="position:absolute; top:15px; left:15px; background:#ffd700; color:#000;">HOT</span>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category" th:text="${product.category?.name}">Brand</div>
+                            <h3 class="product-title">
+                                <a th:href="@{/products/detail/{id}(id=${product.id})}" th:text="${product.name}"
+                                    style="color:inherit;"></a>
+                            </h3>
+                            <div class="product-rating" style="margin-bottom: 8px;">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                    th:style="'color: ' + (${ratings != null && ratings[product.id] != null && i <= ratings[product.id]} ? '#ffd700' : '#e2e8f0') + '; font-size: 0.8rem;'">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            </div>
+                            <div class="product-price">
+                                <span th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                    style="color:#ff4757; font-weight:bold;"></span>
+                                <span th:unless="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                                <small th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                    style="text-decoration:line-through; opacity:0.5; margin-left:10px; font-size:0.8rem;"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- New Arrivals -->
+            <section style="margin-top: 80px;">
+                <div class="section-title">
+                    <h2>Hàng Mới Về <span class="promo-badge" th:if="${promoCode != null}">CODE: <span
+                                th:text="${promoCode}"></span></span></h2>
+                </div>
+                <div class="product-grid">
+                    <div th:each="product : ${newArrivals}" class="product-card">
+                        <div class="product-img-wrap">
+                            <a th:href="@{/products/detail/{id}(id=${product.id})}">
+                                <img th:src="@{'/images/' + ${product.image}}" class="product-image"
+                                    th:alt="${product.name}" onerror="this.src='/images/default-watch.jpg'">
+                            </a>
+                            <span class="badge"
+                                style="position:absolute; top:15px; right:15px; background:#eceaa7;">NEW</span>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category" th:text="${product.category?.name}">Brand</div>
+                            <h3 class="product-title">
+                                <a th:href="@{/products/detail/{id}(id=${product.id})}" th:text="${product.name}"
+                                    style="color:inherit;"></a>
+                            </h3>
+                            <div class="product-rating" style="margin-bottom: 8px;">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                    th:style="'color: ' + (${ratings != null && ratings[product.id] != null && i <= ratings[product.id]} ? '#ffd700' : '#e2e8f0') + '; font-size: 0.8rem;'">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            </div>
+                            <div class="product-price">
+                                <span
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 40px;">
+                    <a th:href="@{/products}" class="btn-outline" style="text-decoration:none;">Xem tất cả sản phẩm</a>
+                </div>
+            </section>
+
+            <!-- Special Offers -->
+            <section style="margin-top: 80px; margin-bottom: 80px;" th:if="${!specialOffers.isEmpty()}">
+                <div class="section-title">
+                    <h2><i class="fas fa-tag" style="color: #ff4757;"></i> Ưu Đãi Đặc Biệt</h2>
+                </div>
+                <div class="product-grid">
+                    <div th:each="product : ${specialOffers}" class="product-card">
+                        <div class="product-img-wrap">
+                            <a th:href="@{/products/detail/{id}(id=${product.id})}">
+                                <img th:src="@{'/images/' + ${product.image}}" class="product-image"
+                                    th:alt="${product.name}" onerror="this.src='/images/default-watch.jpg'">
+                            </a>
+                            <div class="badge" style="position:absolute; top:15px; left:15px; background:#ff4757;">
+                                GIẢM GIÁ
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-category" th:text="${product.category?.name}">Brand</div>
+                            <h3 class="product-title">
+                                <a th:href="@{/products/detail/{id}(id=${product.id})}" th:text="${product.name}"
+                                    style="color:inherit;"></a>
+                            </h3>
+                            <div class="product-rating" style="margin-bottom: 8px;">
+                                <span th:each="i : ${#numbers.sequence(1, 5)}"
+                                    th:style="'color: ' + (${ratings != null && ratings[product.id] != null && i <= ratings[product.id]} ? '#ffd700' : '#e2e8f0') + '; font-size: 0.8rem;'">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            </div>
+                            <div class="product-price">
+                                <span th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                    style="color:#ff4757; font-weight:bold;"></span>
+                                <span th:unless="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                                <small th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                    th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                    style="text-decoration:line-through; opacity:0.5; margin-left:10px; font-size:0.8rem;"></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+
+</html>

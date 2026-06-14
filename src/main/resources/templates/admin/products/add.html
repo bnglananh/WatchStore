@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/layout-admin}">
+<head>
+    <title>Thêm sản phẩm</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Thêm sản phẩm</h1>
+            <div class="badge">Admin Panel</div>
+        </div>
+
+        <div class="card">
+            <h2><i class="fas fa-plus-circle"></i> Tạo sản phẩm mới</h2>
+            <form th:action="@{/admin/products/save}" method="post" enctype="multipart/form-data" th:object="${product}">
+                <input type="hidden" th:field="*{id}" />
+
+                <div class="form-group">
+                    <label><i class="fas fa-watch"></i> Tên đồng hồ</label>
+                    <input type="text" th:field="*{name}" class="form-control" placeholder="Ví dụ: Rolex Submariner" required>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label><i class="fas fa-copyright"></i> Thương hiệu</label>
+                        <select th:field="*{brand}" class="form-control" required>
+                            <option value="">-- Chọn thương hiệu --</option>
+                            <option value="Seiko">Seiko</option>
+                            <option value="Casio">Casio</option>
+                            <option value="Citizen">Citizen</option>
+                            <option value="Orient">Orient</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-shield-alt"></i> Bảo hành</label>
+                        <input type="text" th:field="*{warranty}" class="form-control" placeholder="Ví dụ: 12 tháng, 2 năm">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-tools"></i> Chất liệu</label>
+                    <input type="text" th:field="*{material}" class="form-control" placeholder="Ví dụ: Thép không gỉ, Dây da">
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label><i class="fas fa-tag"></i> Danh mục</label>
+                        <select th:field="*{category.id}" class="form-control" required>
+                            <option value="">Chọn danh mục</option>
+                            <option th:each="c:${categories}" th:value="${c.id}" th:text="${c.name}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-cubes"></i> Số lượng tồn</label>
+                        <input type="number" th:field="*{stock}" class="form-control" required min="0">
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label><i class="fas fa-money-bill-wave"></i> Giá bán (VNĐ)</label>
+                        <input type="number" th:field="*{price}" class="form-control" placeholder="Nhập giá" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-percentage"></i> Giá khuyến mãi (nếu có)</label>
+                        <input type="number" th:field="*{discountPrice}" class="form-control" placeholder="Giá giảm" min="0">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-align-left"></i> Mô tả sản phẩm</label>
+                    <textarea th:field="*{description}" class="form-control" placeholder="Mô tả chi tiết đồng hồ"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label style="display:inline-flex; align-items:center; cursor:pointer; gap:12px; background: #f8fafc; padding: 12px 20px; border-radius: 12px; border: 1px solid var(--border);">
+                        <input type="checkbox" th:field="*{featured}" style="width:20px; height:20px; cursor:pointer;"> 
+                        <span style="font-weight: 600;">Đánh dấu là Sản phẩm nổi bật</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-images"></i> Hình ảnh sản phẩm (Có thể chọn nhiều)</label>
+                    <div class="file-box" onclick="document.getElementById('imageFiles').click()">
+                        <div id="upload-placeholder">
+                            <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                            <p style="color: var(--text-muted);">Nhấn vào đây để tải lên một hoặc nhiều ảnh</p>
+                            <small>(Định dạng: JPG, PNG, WEBP)</small>
+                        </div>
+                        <input type="file" id="imageFiles" name="imageFiles" accept="image/*" multiple onchange="previewImages(event)" style="display:none;">
+                        
+                        <div id="image-preview-container" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-top: 20px; width: 100%;">
+                            <!-- Previews will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions mt">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu sản phẩm
+                    </button>
+                    <a th:href="@{/admin/products}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Hủy bỏ
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            function previewImages(event) {
+                const container = document.getElementById('image-preview-container');
+                const placeholder = document.getElementById('upload-placeholder');
+                container.innerHTML = '';
+                
+                if (event.target.files.length > 0) {
+                    placeholder.style.display = 'none';
+                    
+                    Array.from(event.target.files).forEach((file, index) => {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const wrapper = document.createElement('div');
+                            wrapper.style.position = 'relative';
+                            wrapper.style.borderRadius = '12px';
+                            wrapper.style.overflow = 'hidden';
+                            wrapper.style.aspectRatio = '1/1';
+                            wrapper.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                            wrapper.style.border = '2px solid ' + (index === 0 ? 'var(--primary)' : '#e2e8f0');
+
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.style.width = '100%';
+                            img.style.height = '100%';
+                            img.style.objectFit = 'cover';
+
+                            if (index === 0) {
+                                const badge = document.createElement('span');
+                                badge.innerText = 'Ảnh chính';
+                                badge.style.position = 'absolute';
+                                badge.style.top = '5px';
+                                badge.style.left = '5px';
+                                badge.style.background = 'var(--primary)';
+                                badge.style.color = 'white';
+                                badge.style.padding = '2px 6px';
+                                badge.style.fontSize = '10px';
+                                badge.style.borderRadius = '4px';
+                                wrapper.appendChild(badge);
+                            }
+
+                            wrapper.appendChild(img);
+                            container.appendChild(wrapper);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                } else {
+                    placeholder.style.display = 'block';
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

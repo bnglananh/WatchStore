@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/layout-admin}">
+<head>
+    <title>Thêm danh mục</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Thêm danh mục</h1>
+            <div class="badge">Admin Panel</div>
+        </div>
+
+        <div class="card max-w-800">
+            <h2><i class="fas fa-plus-circle"></i> Tạo danh mục mới</h2>
+            <form th:action="@{/admin/categories/save}" method="post" th:object="${category}">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Tên danh mục</label>
+                    <input type="text" th:field="*{name}" class="form-control" placeholder="Ví dụ: Đồng hồ cơ" required>
+                </div>
+                <div class="actions mt">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Lưu danh mục
+                    </button>
+                    <a th:href="@{/admin/categories}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+                <div class="tip" style="margin-top: 20px; font-size: 13px; color: #64748b; background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <i class="fas fa-lightbulb" style="color: var(--accent);"></i> <strong>Gợi ý:</strong> Bạn có thể tạo các danh mục như Đồng hồ nam, Đồng hồ nữ, Luxury, Sport, Automatic...
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

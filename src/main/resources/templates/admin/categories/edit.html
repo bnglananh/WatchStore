@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layouts/layout-admin}">
+<head>
+    <title>Cập nhật danh mục</title>
+</head>
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Cập nhật danh mục</h1>
+            <div class="badge">Edit Mode</div>
+        </div>
+
+        <div class="card max-w-800">
+            <h2><i class="fas fa-edit"></i> Chỉnh sửa danh mục</h2>
+            <form th:action="@{/admin/categories/save}" method="post" th:object="${category}">
+                <input type="hidden" th:field="*{id}">
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Tên danh mục</label>
+                    <input type="text" th:field="*{name}" class="form-control" placeholder="Nhập tên danh mục" required>
+                </div>
+                <div class="actions mt">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Cập nhật
+                    </button>
+                    <a th:href="@{/admin/categories}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                </div>
+                <div class="tip" style="margin-top: 20px; font-size: 13px; color: #64748b; background: #f8fafc; padding: 15px; border-radius: 10px; border-left: 4px solid var(--primary);">
+                    <i class="fas fa-info-circle"></i> <strong>Lưu ý:</strong> Việc thay đổi tên danh mục sẽ cập nhật ngay lập tức cho tất cả các sản phẩm thuộc danh mục này.
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

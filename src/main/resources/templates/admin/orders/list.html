@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-admin}">
+
+<head>
+    <title>Quản lý đơn hàng</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Quản lý đơn hàng</h1>
+            <div class="badge" th:text="${orders.size()} + ' đơn hàng'">0 đơn hàng</div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="card" style="margin-bottom: 20px; padding: 15px;">
+            <form th:action="@{/admin/orders}" method="get" style="display: flex; gap: 10px; align-items: center;">
+                <input type="text" name="email" th:value="${searchEmail}" placeholder="Tìm kiếm theo email khách hàng..." 
+                       style="flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+                <button type="submit" class="btn btn-primary" style="padding: 10px 20px; width: auto; margin-top: 0;">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+                <a th:href="@{/admin/orders}" class="btn btn-outline" style="padding: 10px 20px; text-decoration: none; display: inline-block;">
+                    <i class="fas fa-sync-alt"></i> Làm mới
+                </a>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Khách hàng</th>
+                            <th>Email</th>
+                            <th style="width: 150px;">Tổng cộng</th>
+                            <th style="width: 120px;">Trạng thái</th>
+                            <th style="width: 220px; text-align: center;">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td th:text="${order.id}"></td>
+                            <td style="font-weight: 600;" th:text="${order.customerName}"></td>
+                            <td th:text="${order.email}"></td>
+                            <td>
+                                <strong th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></strong>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                    th:classappend="${order.status == 'Pending'} ? 'warning' : (${order.status == 'Cancelled'} ? 'danger' : (${order.status == 'Completed'} ? 'success' : 'info'))"
+                                    th:text="${order.status == 'Pending' ? 'Chờ xác nhận' : 
+                                              (order.status == 'Confirmed' ? 'Đã xác nhận' : 
+                                              (order.status == 'Shipping' ? 'Đang giao' : 
+                                              (order.status == 'Completed' ? 'Hoàn thành' : 
+                                              (order.status == 'Cancelled' ? 'Đã hủy' : order.status))))}"></span>
+                            </td>
+                            <td>
+                                <div class="actions" style="justify-content: center;">
+                                    <a th:href="@{/admin/orders/{id}(id=${order.id})}" class="btn edit btn-sm">
+                                        <i class="fas fa-eye"></i> Chi tiết
+                                    </a>
+                                    <a th:href="@{/admin/orders/invoice/{id}(id=${order.id})}" class="btn btn-secondary btn-sm"
+                                        target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

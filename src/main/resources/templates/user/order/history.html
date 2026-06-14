@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-user}">
+<head><title>Lịch sử đơn hàng</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="container fade-in">
+        <div class="page-header-small">
+            <h1 th:if="${isUserLoggedIn}"><i class="fas fa-history"></i> Lịch sử đơn hàng của tôi</h1>
+            <h1 th:unless="${isUserLoggedIn}"><i class="fas fa-search"></i> Tra cứu đơn hàng</h1>
+        </div>
+        
+        <!-- Alerts -->
+        <div th:if="${message}" class="alert alert-success" th:text="${message}" style="margin-bottom:1rem; padding:10px; border-radius:8px; background:#dcfce7; color:#166534;"></div>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}" style="margin-bottom:1rem; padding:10px; border-radius:8px; background:#fee2e2; color:#991b1b;"></div>
+
+        <div th:if="${!isUserLoggedIn or isAdmin}" class="form-card search-box" style="margin-bottom:2rem;">
+            <form th:action="@{/order/history}" method="get" style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                <div class="form-group" style="flex:1;min-width:250px;margin-bottom:0;">
+                    <label><i class="fas fa-search"></i> Tìm kiếm theo Email đặt hàng</label>
+                    <input type="email" name="email" th:value="${searchEmail}" placeholder="Nhập email bạn đã dùng khi đặt hàng" required>
+                </div>
+                <button type="submit" class="btn-checkout" style="padding:12px 28px;white-space:nowrap;">
+                    <i class="fas fa-search"></i> Tìm kiếm
+                </button>
+            </form>
+            <p style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-muted);">
+                <i class="fas fa-info-circle"></i> Đăng nhập để tự động xem lịch sử đơn hàng của bạn.
+            </p>
+        </div>
+
+        <div th:if="${orders == null or orders.isEmpty()}" class="empty-state" style="padding:4rem 2rem; text-align:center;">
+            <div style="font-size:4rem; color:var(--border); margin-bottom:1.5rem;">
+                <i class="fas fa-box-open"></i>
+            </div>
+            <h3 style="font-size:1.5rem; color:var(--text); margin-bottom:0.5rem;">Bạn chưa có đơn hàng nào</h3>
+            <p style="color:var(--text-muted); margin-bottom:2rem;">Dường như bạn chưa thực hiện giao dịch nào với chúng tôi.</p>
+            <a th:href="@{/products}" class="btn-checkout" style="display:inline-block; width:auto; padding:12px 40px; text-decoration:none;">
+                Khám phá sản phẩm ngay
+            </a>
+        </div>
+
+        <div th:if="${orders != null and !orders.isEmpty()}">
+            <div th:each="order : ${orders}" class="order-card fade-in" style="background:white; border-radius:16px; padding:2rem; border:1px solid var(--border); box-shadow:var(--shadow); margin-bottom:2rem;">
+                <div class="order-card-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem; border-bottom:1px solid var(--border); padding-bottom:1rem;">
+                    <div>
+                        <h3 style="margin:0; font-size:1.2rem;">Mã đơn hàng: <span style="color:var(--primary); font-weight:700;">#<span th:text="${order.id}"></span></span></h3>
+                        <div style="color:var(--text-muted); font-size:0.9rem; margin-top:5px;">
+                            <i class="fas fa-user"></i> <span th:text="${order.customerName}"></span>
+                            <span style="margin:0 10px; opacity:0.5;">|</span>
+                            <i class="fas fa-envelope"></i> <span th:text="${order.email}"></span>
+                        </div>
+                    </div>
+                    <span class="status-badge" 
+                          th:style="'padding:8px 16px; border-radius:20px; font-weight:600; font-size:0.85rem; ' + 
+                                   (${order.status == 'Pending'} ? 'background:#fef3c7; color:#92400e;' : 
+                                   (${order.status == 'Confirmed'} ? 'background:#e0f2fe; color:#0369a1;' : 
+                                   (${order.status == 'Shipping'} ? 'background:#eff6ff; color:#1d4ed8;' : 
+                                   (${order.status == 'Completed'} ? 'background:#dcfce7; color:#166534;' : 'background:#fee2e2; color:#ef4444;'))))"
+                          th:text="${order.status == 'Pending' ? 'Chờ xác nhận' : 
+                                   (order.status == 'Confirmed' ? 'Đã xác nhận' : 
+                                   (order.status == 'Shipping' ? 'Đang giao' : 
+                                   (order.status == 'Completed' ? 'Hoàn thành' : 
+                                   (order.status == 'Cancelled' ? 'Đã hủy' : order.status))))}">Status</span>
+                </div>
+
+                <div class="order-items-list" style="margin-bottom:1.5rem;">
+                    <div th:each="detail : ${order.orderDetails}" style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #eee;">
+                        <div style="display:flex; align-items:center;">
+                            <i class="fas fa-clock" style="color:var(--accent); margin-right:1rem;"></i>
+                            <div>
+                                <div style="font-weight:600;" th:text="${detail.product.name}">Sản phẩm</div>
+                                <div style="font-size:0.85rem; color:var(--text-muted);">Số lượng: <span th:text="${detail.quantity}"></span></div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-weight:600; margin-bottom:5px;" th:text="${#numbers.formatDecimal((detail.price != null ? detail.price : (detail.product.discountPrice != null && detail.product.discountPrice > 0 ? detail.product.discountPrice : detail.product.price)) * detail.quantity, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></div>
+                            <button type="button" th:if="${order.status == 'Completed' and isUserLoggedIn}" 
+                                    th:onclick="'openReviewModal(' + ${detail.product.id} + ')'"
+                                    style="background:#f59e0b; color:white; border:none; padding:5px 10px; border-radius:5px; font-size:0.8rem; cursor:pointer;">
+                                <i class="fas fa-star"></i> Đánh giá
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="order-card-footer" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:1.5rem; border-radius:12px;">
+                    <div style="font-size:0.9rem; color:var(--text-muted);">
+                        <div><i class="fas fa-map-marker-alt"></i> <span th:text="${order.shippingAddress}"></span></div>
+                        <div th:if="${order.discountAmount > 0}" style="color:var(--accent); margin-top:5px;">
+                            <i class="fas fa-tag"></i> Giảm giá: -<span th:text="${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"></span> VNĐ
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0.5rem;">
+                        <div style="font-size:1.3rem;">
+                            Tổng tiền: <strong style="color:var(--primary);" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</strong>
+                        </div>
+                        <form th:if="${order.status == 'Pending'}" th:action="@{/order/cancel/{id}(id=${order.id})}" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">
+                            <button type="submit" class="btn-sm" style="background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:0.85rem;">
+                                <i class="fas fa-times-circle"></i> Hủy đơn hàng
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:white; padding:2rem; border-radius:12px; width:90%; max-width:500px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; margin-bottom:1.5rem;"><i class="fas fa-star" style="color:#fbbf24;"></i> Đánh giá sản phẩm</h3>
+            <form th:action="@{/reviews/add}" method="post">
+                <input type="hidden" id="modalProductId" name="productId">
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Số sao:</label>
+                    <select name="rating" required class="form-control" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);">
+                        <option value="5">5 sao - Tuyệt vời</option>
+                        <option value="4">4 sao - Rất tốt</option>
+                        <option value="3">3 sao - Bình thường</option>
+                        <option value="2">2 sao - Kém</option>
+                        <option value="1">1 sao - Rất tệ</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label style="display:block; margin-bottom:5px; font-weight:600;">Nhận xét:</label>
+                    <textarea name="comment" required class="form-control" rows="4" placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..." style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);"></textarea>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px;">
+                    <button type="button" onclick="closeReviewModal()" class="btn-sm" style="background:#e2e8f0; color:#475569; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:600;">Hủy</button>
+                    <button type="submit" class="btn-checkout" style="width:auto; padding:10px 20px; border-radius:8px; margin-top:0;">Gửi đánh giá</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openReviewModal(productId) {
+            document.getElementById('modalProductId').value = productId;
+            document.getElementById('reviewModal').style.display = 'flex';
+        }
+        function closeReviewModal() {
+            document.getElementById('reviewModal').style.display = 'none';
+        }
+    </script>
+</div>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-admin}">
+<head><title>Chi tiết đơn hàng</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="topbar">
+        <h1>Chi tiết đơn hàng #<span th:text="${order.id}"></span></h1>
+        <a th:href="@{/admin/orders}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Quay lại</a>
+    </div>
+
+    <div class="checkout-layout" style="display:grid;grid-template-columns: 1fr 350px; gap:20px;">
+        <div class="checkout-form-section">
+            <div class="card">
+                <h2>Thông tin khách hàng</h2>
+                <p><strong>Người nhận:</strong> <span th:text="${order.customerName}"></span></p>
+                <p><strong>Email:</strong> <span th:text="${order.email}"></span></p>
+                <p><strong>Số điện thoại:</strong> <span th:text="${order.phoneNumber}"></span></p>
+                <p><strong>Địa chỉ:</strong> <span th:text="${order.shippingAddress}"></span></p>
+                <p><strong>Ghi chú:</strong> <span th:text="${order.notes}"></span></p>
+                <p><strong>Thanh toán:</strong> <span th:text="${order.paymentMethod}"></span></p>
+            </div>
+
+            <div class="card" style="margin-top:20px;">
+                <h2>Danh sách sản phẩm</h2>
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Đơn giá</th>
+                            <th>SL</th>
+                            <th>Thành tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="detail : ${order.orderDetails}">
+                            <td th:text="${detail.product.name}"></td>
+                            <td th:text="${#numbers.formatDecimal(detail.price != null ? detail.price : (detail.product.discountPrice != null && detail.product.discountPrice > 0 ? detail.product.discountPrice : detail.product.price), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                            <td th:text="${detail.quantity}"></td>
+                            <td th:text="${#numbers.formatDecimal((detail.price != null ? detail.price : (detail.product.discountPrice != null && detail.product.discountPrice > 0 ? detail.product.discountPrice : detail.product.price)) * detail.quantity, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="checkout-summary-card" style="background:white; padding:20px; border-radius:16px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+            <h2 style="font-size:1.2rem; color:#1e3c72; margin-bottom:15px;">Trạng thái: 
+                <span th:text="${order.status == 'Pending' ? 'Chờ xác nhận' : 
+                              (order.status == 'Confirmed' ? 'Đã xác nhận' : 
+                              (order.status == 'Shipping' ? 'Đang giao' : 
+                              (order.status == 'Completed' ? 'Hoàn thành' : 
+                              (order.status == 'Cancelled' ? 'Đã hủy' : order.status))))}" 
+                      style="font-weight:700;"></span>
+            </h2>
+            
+            <div th:if="${order.status == 'Pending'}">
+                <form th:action="@{/admin/orders/update-status}" method="post" style="margin-bottom:10px;">
+                    <input type="hidden" name="orderId" th:value="${order.id}">
+                    <input type="hidden" name="status" value="Confirmed">
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:12px;">Xác nhận đơn hàng</button>
+                </form>
+                <form th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="orderId" th:value="${order.id}">
+                    <input type="hidden" name="status" value="Cancelled">
+                    <button type="submit" class="btn btn-outline" style="width:100%; padding:10px; color:#ef4444; border-color:#ef4444;" onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">Hủy đơn hàng</button>
+                </form>
+            </div>
+
+            <div th:if="${order.status == 'Confirmed'}">
+                <form th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="orderId" th:value="${order.id}">
+                    <input type="hidden" name="status" value="Shipping">
+                    <button type="submit" class="btn btn-primary" style="width:100%; padding:12px; background: #0ea5e9;">Bắt đầu giao hàng</button>
+                </form>
+            </div>
+
+            <div th:if="${order.status == 'Shipping'}">
+                <form th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="orderId" th:value="${order.id}">
+                    <input type="hidden" name="status" value="Completed">
+                    <button type="submit" class="btn btn-success" style="width:100%; padding:12px; background: #22c55e;">Hoàn thành đơn hàng</button>
+                </form>
+            </div>
+
+            <div th:if="${order.status == 'Completed'}" style="text-align: center; background: #f0fdf4; padding: 15px; border-radius: 8px; border: 1px solid #bbf7d0;">
+                <i class="fas fa-check-circle" style="color: #22c55e; font-size: 2rem; margin-bottom: 10px;"></i>
+                <p style="color: #166534; font-weight: 600; margin: 0;">Đơn hàng đã hoàn thành</p>
+            </div>
+
+            <div th:if="${order.status == 'Cancelled'}" style="text-align: center; background: #fef2f2; padding: 15px; border-radius: 8px; border: 1px solid #fecaca;">
+                <i class="fas fa-times-circle" style="color: #ef4444; font-size: 2rem; margin-bottom: 10px;"></i>
+                <p style="color: #991b1b; font-weight: 600; margin: 0;">Đơn hàng đã bị hủy</p>
+            </div>
+
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            
+            <div class="summary-row" th:if="${order.discountAmount > 0}" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span>Tiền hàng:</span>
+                <span th:text="${#numbers.formatDecimal(order.totalBeforeDiscount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+            </div>
+            <div class="summary-row" th:if="${order.discountAmount > 0}" style="display:flex; justify-content:space-between; margin-bottom:10px; color:#ef4444;">
+                <span>Giảm giá:</span>
+                <span>-<span th:text="${#numbers.formatDecimal(order.discountAmount, 0, 'COMMA', 0, 'POINT')}"></span> VNĐ</span>
+            </div>
+            <div class="summary-row total-row">
+                <span>Tổng cộng:</span>
+                <strong th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></strong>
+            </div>
+            
+            <a th:href="@{/admin/orders/invoice/{id}(id=${order.id})}" target="_blank" class="btn btn-secondary" style="width:100%; margin-top:10px;">
+                <i class="fas fa-print"></i> In hóa đơn
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

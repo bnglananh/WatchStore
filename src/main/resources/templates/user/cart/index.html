@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-user}">
+<head><title>Giỏ hàng</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="container fade-in">
+        <div class="page-header-small">
+            <h1><i class="fas fa-shopping-cart"></i> Giỏ hàng của bạn</h1>
+            <a th:href="@{/user/products}" class="back-btn"><i class="fas fa-arrow-left"></i> Tiếp tục mua sắm</a>
+        </div>
+
+        <div th:if="${items.isEmpty()}" class="empty-state">
+            <i class="fas fa-shopping-basket"></i>
+            <h3>Giỏ hàng đang trống</h3>
+            <a th:href="@{/user/products}" class="btn-add-cart" style="width:auto;padding:12px 30px;text-decoration:none;display:inline-block;margin-top:1rem;">Mua sắm ngay</a>
+        </div>
+
+        <div th:if="${!items.isEmpty()}">
+            <div class="cart-layout">
+                <div class="cart-items-section">
+                    <table class="cart-table">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${items}" th:id="'item-' + ${item.product.id}">
+                                <td style="display:flex;align-items:center;gap:15px;">
+                                    <img th:src="@{'/images/' + ${item.product.image}}" class="cart-img"
+                                         onerror="this.src='/images/default-watch.jpg'">
+                                    <div>
+                                        <span th:text="${item.product.name}" style="font-weight:600;display:block;"></span>
+                                        <span th:text="${item.product.category?.name}" style="color:var(--text-muted);font-size:0.85rem;"></span>
+                                    </div>
+                                </td>
+                                <td th:text="${#numbers.formatDecimal(item.product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                                <td>
+                                    <div class="quantity-control">
+                                        <button class="quantity-btn" th:onclick="'updateQuantity(' + ${item.product.id} + ', -1)'">−</button>
+                                        <span th:id="'qty-' + ${item.product.id}" th:text="${item.quantity}">1</span>
+                                        <button class="quantity-btn" th:onclick="'updateQuantity(' + ${item.product.id} + ', 1)'">+</button>
+                                    </div>
+                                </td>
+                                <td th:id="'subtotal-' + ${item.product.id}"
+                                    th:text="${#numbers.formatDecimal(item.product.price * item.quantity, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                                <td>
+                                    <a th:href="@{/cart/remove/{id}(id=${item.product.id})}" class="btn-remove" title="Xóa">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="cart-actions">
+                        <a th:href="@{/cart/clear}" class="btn-outline" onclick="return confirm('Xóa toàn bộ giỏ hàng?')">
+                            <i class="fas fa-trash"></i> Xóa giỏ hàng
+                        </a>
+                    </div>
+                </div>
+
+                <div class="cart-summary-card">
+                    <h3>Tóm tắt đơn hàng</h3>
+                    <div class="summary-row">
+                        <span>Tạm tính:</span>
+                        <span id="total-price"
+                              th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+                    
+                    <div class="summary-row" id="discount-row" th:style="${discountAmount > 0 ? '' : 'display:none;'}">
+                        <span>Giảm giá:</span>
+                        <span class="text-danger" id="discount-amount"
+                              th:text="'- ' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+
+                    <div class="summary-row">
+                        <span>Phí vận chuyển:</span>
+                        <span class="text-success">Miễn phí</span>
+                    </div>
+
+                    <div class="summary-row total-row">
+                        <span>Tổng thanh toán:</span>
+                        <span id="grand-total"
+                              th:text="${#numbers.formatDecimal(grandTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+
+                    <div class="coupon-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border);">
+                        <div id="coupon-input-group" th:style="${appliedCoupon == null ? '' : 'display:none;'}">
+                            <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Chọn mã giảm giá</label>
+                            <div style="display: flex; gap: 8px;">
+                                <select id="coupon-code" onchange="applyCoupon()"
+                                        style="flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; background-color: white; cursor: pointer;">
+                                    <option value="">-- Chọn mã giảm giá --</option>
+                                    <option th:each="coupon : ${coupons}" 
+                                            th:value="${coupon.code}" 
+                                            th:text="${coupon.code} + ' - Giảm ' + ${#numbers.formatDecimal(coupon.discountValue, 0, 'COMMA', 0, 'POINT')} + (${coupon.discountType == 'PERCENTAGE' ? '%' : 'đ'})"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="applied-coupon-info" th:style="${appliedCoupon != null ? '' : 'display:none;'}"
+                             style="background: #f0f9ff; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #bae6fd;">
+                            <div>
+                                <i class="fas fa-tag" style="color: var(--primary);"></i>
+                                <span style="font-weight: 600; color: #0369a1; margin-left: 5px;" id="applied-code-text" th:text="${appliedCoupon?.code}">CODE</span>
+                            </div>
+                            <button onclick="removeCoupon()" style="background: none; border: none; color: #ef4444; cursor: pointer; padding: 5px;"><i class="fas fa-times-circle"></i></button>
+                        </div>
+                        <p id="coupon-error" style="color: #ef4444; font-size: 0.8rem; margin-top: 5px; display: none;"></p>
+                    </div>
+
+                    <a th:href="@{/order/checkout}" class="btn-checkout" style="margin-top: 1.5rem;">
+                        <i class="fas fa-credit-card"></i> Thanh toán ngay
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatVnd(amount) {
+            return amount.toLocaleString('vi-VN') + ' VNĐ';
+        }
+
+        async function updateQuantity(productId, change) {
+            const qtyEl = document.getElementById('qty-' + productId);
+            const currentQty = parseInt(qtyEl.textContent);
+            const newQty = currentQty + change;
+            if (newQty < 1) return;
+
+            const formData = new FormData();
+            formData.append('quantity', newQty);
+            try {
+                const response = await fetch('/cart/update/' + productId, { method: 'POST', body: formData });
+                if (response.ok) {
+                    const data = await response.json();
+                    qtyEl.textContent = newQty;
+                    
+                    // Update cart count in header
+                    const cartCountEl = document.getElementById('cart-count');
+                    if (cartCountEl) cartCountEl.textContent = data.cartCount;
+
+                    // Update totals
+                    document.getElementById('total-price').textContent = formatVnd(data.totalPrice);
+                    document.getElementById('grand-total').textContent = formatVnd(data.grandTotal);
+                    
+                    // Update discount row
+                    const discountRow = document.getElementById('discount-row');
+                    if (data.discountAmount > 0) {
+                        discountRow.style.display = 'flex';
+                        document.getElementById('discount-amount').textContent = '- ' + formatVnd(data.discountAmount);
+                    } else {
+                        discountRow.style.display = 'none';
+                    }
+
+                    // Update item subtotal
+                    const priceRow = document.querySelector(`#item-${productId} td:nth-child(2)`);
+                    const price = parseInt(priceRow.textContent.replace(/\D/g, ''));
+                    document.getElementById('subtotal-' + productId).textContent = formatVnd(price * newQty);
+
+                    // If coupon was invalidated
+                    if (!data.couponValid) {
+                        document.getElementById('coupon-input-group').style.display = 'block';
+                        document.getElementById('applied-coupon-info').style.display = 'none';
+                    }
+                    showToast('Đã cập nhật giỏ hàng');
+                } else {
+                    const errorText = await response.text();
+                    showToast(errorText || 'Không thể cập nhật số lượng', 'error');
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function applyCoupon() {
+            const code = document.getElementById('coupon-code').value.trim();
+            if (!code) return;
+
+            const errorEl = document.getElementById('coupon-error');
+            errorEl.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('code', code);
+
+            try {
+                const response = await fetch('/cart/apply-coupon', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('coupon-input-group').style.display = 'none';
+                    document.getElementById('applied-coupon-info').style.display = 'flex';
+                    document.getElementById('applied-code-text').textContent = data.code;
+                    
+                    document.getElementById('discount-row').style.display = 'flex';
+                    document.getElementById('discount-amount').textContent = '- ' + formatVnd(data.discountAmount);
+                    document.getElementById('grand-total').textContent = formatVnd(data.grandTotal);
+                    document.getElementById('coupon-code').value = '';
+                    showToast('Áp dụng mã giảm giá thành công!');
+                } else {
+                    errorEl.textContent = typeof data === 'string' ? data : 'Lỗi áp dụng mã giảm giá';
+                    errorEl.style.display = 'block';
+                    showToast('Mã giảm giá không hợp lệ', 'error');
+                }
+            } catch (e) {
+                errorEl.textContent = 'Lỗi kết nối máy chủ';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        async function removeCoupon() {
+            try {
+                const response = await fetch('/cart/remove-coupon', { method: 'POST' });
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('coupon-input-group').style.display = 'block';
+                    document.getElementById('applied-coupon-info').style.display = 'none';
+                    document.getElementById('discount-row').style.display = 'none';
+                    document.getElementById('grand-total').textContent = formatVnd(data.grandTotal);
+                    showToast('Đã gỡ mã giảm giá');
+                }
+            } catch (e) { console.error(e); }
+        }
+    </script>
+</div>
+</body>
+</html>

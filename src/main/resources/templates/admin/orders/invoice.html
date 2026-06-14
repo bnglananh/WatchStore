@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Hóa đơn #<span th:text="${order.id}"></span></title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+        .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid #1e3c72; padding-bottom: 20px; margin-bottom: 30px; }
+        .brand { font-size: 28px; font-weight: bold; color: #1e3c72; }
+        .invoice-info { text-align: right; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+        .section-title { font-weight: bold; text-transform: uppercase; margin-bottom: 10px; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th { background: #f8fafc; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; }
+        .total-section { text-align: right; font-size: 1.2rem; }
+        .footer { margin-top: 50px; text-align: center; font-size: 0.9rem; color: #666; border-top: 1px solid #eee; padding-top: 20px; }
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding:10px 20px; background:#1e3c72; color:white; border:none; border-radius:5px; cursor:pointer;">In hóa đơn</button>
+    </div>
+
+    <div class="invoice-header">
+        <div class="brand">WATCH STORE</div>
+        <div class="invoice-info">
+            <div><strong>Hóa đơn #<span th:text="${order.id}"></span></strong></div>
+            <div id="invoice-date"></div>
+            <script>document.getElementById('invoice-date').textContent = new Date().toLocaleString('vi-VN');</script>
+        </div>
+    </div>
+
+    <div class="details-grid">
+        <div>
+            <div class="section-title">Thông tin khách hàng</div>
+            <div><strong><span th:text="${order.customerName}"></span></strong></div>
+            <div th:text="${order.email}"></div>
+            <div th:text="${order.phoneNumber}"></div>
+            <div th:text="${order.shippingAddress}"></div>
+        </div>
+        <div style="text-align: right;">
+            <div class="section-title">Thông tin cửa hàng</div>
+            <div><strong>Watch Store Premium</strong></div>
+            <div>Số 123, Đường ABC, TP. HCM</div>
+            <div>Hotline: 1900 1234</div>
+            <div>Email: support@watchstore.com</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Sản phẩm</th>
+                <th style="text-align: right;">Đơn giá</th>
+                <th style="text-align: center;">Số lượng</th>
+                <th style="text-align: right;">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="detail : ${order.orderDetails}">
+                <td th:text="${detail.product.name}"></td>
+                <td style="text-align: right;" th:text="${#numbers.formatDecimal(detail.price != null ? detail.price : (detail.product.discountPrice != null && detail.product.discountPrice > 0 ? detail.product.discountPrice : detail.product.price), 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                <td style="text-align: center;" th:text="${detail.quantity}"></td>
+                <td style="text-align: right;" th:text="${#numbers.formatDecimal((detail.price != null ? detail.price : (detail.product.discountPrice != null && detail.product.discountPrice > 0 ? detail.product.discountPrice : detail.product.price)) * detail.quantity, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <strong>Tổng thanh toán: </strong>
+        <span style="color:#e11d48; font-size: 1.5rem;" th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+    </div>
+
+    <div class="footer">
+        Cảm ơn quý khách đã mua sắm tại Watch Store!<br>
+        Hàng đã mua vui lòng kiểm tra kỹ trước khi nhận.
+    </div>
+</body>
+</html>

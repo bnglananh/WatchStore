@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-admin}">
+
+<head>
+    <title>Quản lý Đánh giá | Admin</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container fade-in">
+            <header class="page-header">
+                <h1><i class="fas fa-comments"></i> Quản lý Đánh giá</h1>
+                <p>Phê duyệt hoặc xóa các bình luận từ khách hàng</p>
+            </header>
+
+            <div class="card">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Người dùng</th>
+                                <th style="width: 150px;">Đánh giá</th>
+                                <th>Bình luận</th>
+                                <th style="width: 150px;">Ngày gửi</th>
+                                <th style="width: 120px;">Trạng thái</th>
+                                <th style="width: 150px; text-align: center;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="review : ${reviews}">
+                                <td>
+                                    <strong style="color: var(--primary-dark);" th:text="${review.product.name}">Product</strong>
+                                </td>
+                                <td th:text="${review.user.username}">User</td>
+                                <td>
+                                    <span style="color:#fbbf24;">
+                                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                            th:class="${i <= review.rating ? 'fas fa-star' : 'far fa-star'}"></i>
+                                    </span>
+                                </td>
+                                <td style="max-width: 300px; white-space: normal;" th:text="${review.comment}">Comment</td>
+                                <td th:text="${#temporals.format(review.createdAt, 'dd/MM/yyyy HH:mm')}">Date</td>
+                                <td>
+                                    <span th:if="${review.approved}" class="badge success">Đã duyệt</span>
+                                    <span th:if="${!review.approved}" class="badge warning">Chờ duyệt</span>
+                                </td>
+                                <td>
+                                    <div class="actions" style="justify-content: center;">
+                                        <form th:if="${!review.approved}" th:action="@{/admin/reviews/approve/{id}(id=${review.id})}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-primary btn-sm" title="Duyệt" style="border:none; cursor:pointer;">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/admin/reviews/delete/{id}(id=${review.id})}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn delete btn-sm" style="border:none; cursor:pointer;" onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${reviews.isEmpty()}">
+                                <td colspan="7" style="text-align:center; padding:3rem; color:var(--text-muted);">
+                                    <i class="fas fa-comment-slash" style="font-size: 2rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                    Chưa có đánh giá nào để quản lý.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

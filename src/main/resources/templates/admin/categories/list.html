@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-admin}">
+
+<head>
+    <title>Danh mục</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Danh mục sản phẩm</h1>
+            <a th:href="@{/admin/categories/add}" class="btn btn-add">+ Thêm danh mục</a>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-title">Tổng danh mục</div>
+                <div class="stat-value" th:text="${#lists.size(categories)}">0</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Tên danh mục</th>
+                            <th style="width: 200px; text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c:${categories}">
+                            <td th:text="${c.id}"></td>
+                            <td><span class="category-badge" th:text="${c.name}"></span></td>
+                            <td>
+                                <div class="actions" style="justify-content: center;">
+                                    <a th:href="@{/admin/categories/edit/{id}(id=${c.id})}" class="btn edit btn-sm">
+                                        <i class="fas fa-edit"></i> Sửa
+                                    </a>
+                                    <form th:action="@{/admin/categories/delete/{id}(id=${c.id})}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn delete btn-sm" style="border:none; cursor:pointer;" onclick="return confirm('Xóa danh mục này?')">
+                                            <i class="fas fa-trash"></i> Xóa
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

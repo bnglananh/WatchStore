@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layouts/layout-user}">
+<head><title>Thanh toán</title></head>
+<body>
+<div layout:fragment="content">
+    <div class="container fade-in">
+        <div class="page-header-small">
+            <h1><i class="fas fa-credit-card"></i> Thông tin thanh toán</h1>
+            <a th:href="@{/cart}" class="back-btn"><i class="fas fa-arrow-left"></i> Quay lại giỏ hàng</a>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger" style="margin-bottom: 1.5rem; padding: 1rem; background: #fee2e2; border-radius: 8px; color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <form th:action="@{/order/place}" method="post">
+            <div class="checkout-layout">
+
+                <div class="checkout-form-section">
+                    <div class="form-card">
+                        <h2><i class="fas fa-map-marker-alt"></i> Địa chỉ nhận hàng</h2>
+                        <div class="form-group">
+                            <label>Họ và tên người nhận</label>
+                            <input type="text" name="customerName" required th:value="${customerName}" placeholder="Nguyễn Văn A">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Số điện thoại</label>
+                                <input type="tel" name="phoneNumber" required th:value="${phoneNumber}" placeholder="0912 345 678">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" name="email" required th:value="${email}" placeholder="email@example.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Địa chỉ giao hàng</label>
+                            <input type="text" name="shippingAddress" required th:value="${shippingAddress}"
+                                   placeholder="Số nhà, tên đường, phường, quận, tỉnh/thành">
+                        </div>
+                        <div class="form-group">
+                            <label>Ghi chú (tùy chọn)</label>
+                            <textarea name="notes" rows="3" placeholder="Lời nhắn cho cửa hàng..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <h2><i class="fas fa-tag"></i> Mã giảm giá</h2>
+                        <div class="form-group">
+                            <label>Mã Coupon đã chọn</label>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" name="couponCode" th:value="${couponCode}" 
+                                       th:readonly="${couponCode != null && !couponCode.isEmpty()}"
+                                       placeholder="Chưa áp dụng mã nào" style="flex: 1; background: #f8fafc;">
+                            </div>
+                            <p th:if="${couponCode != null && !couponCode.isEmpty()}" style="font-size: 0.8rem; color: var(--primary); margin-top: 5px;">
+                                <i class="fas fa-check-circle"></i> Mã giảm giá đã được áp dụng từ giỏ hàng.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <h2><i class="fas fa-wallet"></i> Phương thức thanh toán</h2>
+                        <div class="payment-options">
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="COD" checked>
+                                <span class="payment-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <div><strong>Thanh toán khi nhận hàng (COD)</strong><small>Trả tiền mặt khi nhận hàng</small></div>
+                                </span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="BANKING">
+                                <span class="payment-label">
+                                    <i class="fas fa-university"></i>
+                                    <div><strong>Chuyển khoản ngân hàng</strong><small>Chuyển khoản trước khi giao hàng</small></div>
+                                </span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="E-WALLET">
+                                <span class="payment-label">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <div><strong>Ví điện tử</strong><small>Momo, ZaloPay, VNPay</small></div>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-summary-card">
+                    <h3>Tóm tắt đơn hàng</h3>
+                    <div class="summary-row">
+                        <span>Tổng tiền hàng:</span>
+                        <span th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+                    <div class="summary-row" th:if="${discountAmount > 0}">
+                        <span>Giảm giá:</span>
+                        <span class="text-danger" th:text="'- ' + ${#numbers.formatDecimal(discountAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Phí vận chuyển:</span>
+                        <span class="text-success">Miễn phí</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Tổng thanh toán:</span>
+                        <span th:text="${#numbers.formatDecimal(grandTotal, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'">0</span>
+                    </div>
+                    <button type="submit" class="btn-checkout">
+                        <i class="fas fa-check-circle"></i> XÁC NHẬN ĐẶT HÀNG
+                    </button>
+                    <p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-top:1rem;">
+                        <i class="fas fa-shield-alt"></i> Thông tin được bảo mật an toàn
+                    </p>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

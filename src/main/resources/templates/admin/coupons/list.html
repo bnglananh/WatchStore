@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-admin}">
+
+<head>
+    <title>Quản lý Mã giảm giá</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="topbar">
+            <h1>Danh sách Mã giảm giá</h1>
+            <a th:href="@{/admin/coupons/add}" class="btn btn-add">+ Thêm mã mới</a>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Mã code</th>
+                            <th>Loại giảm</th>
+                            <th>Giá trị</th>
+                            <th>Đơn tối thiểu</th>
+                            <th>Ngày hết hạn</th>
+                            <th>Trạng thái</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="c:${coupons}">
+                            <td th:text="${c.id}"></td>
+                            <td style="font-weight:bold; color:var(--primary);" th:text="${c.code}"></td>
+                            <td th:text="${c.discountType == 'PERCENTAGE' ? 'Phần trăm (%)' : 'Cố định (VNĐ)'}"></td>
+                            <td th:text="${c.discountType == 'PERCENTAGE' ? c.discountValue + '%' : #numbers.formatDecimal(c.discountValue, 0, 'COMMA', 0, 'POINT') + ' VNĐ'}"></td>
+                            <td th:text="${#numbers.formatDecimal(c.minOrderAmount, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></td>
+                            <td th:text="${c.expirationDate != null ? c.expirationDate : 'Không có'}"></td>
+                            <td>
+                                <span th:if="${c.active}" class="badge success">Hoạt động</span>
+                                <span th:unless="${c.active}" class="badge danger">Tạm dừng</span>
+                            </td>
+                            <td>
+                                <div class="actions">
+                                    <a th:href="@{/admin/coupons/edit/{id}(id=${c.id})}" class="btn edit btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form th:action="@{/admin/coupons/delete/{id}(id=${c.id})}" method="post" style="display:inline;">
+                                        <button type="submit" class="btn delete btn-sm" style="border:none; cursor:pointer;" onclick="return confirm('Bạn muốn xóa mã này?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${coupons.isEmpty()}" style="text-align:center; padding:2rem; color:var(--text-muted);">
+                <p>Chưa có mã giảm giá nào được tạo.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

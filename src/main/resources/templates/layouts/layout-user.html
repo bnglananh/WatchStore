@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE - Watch Store">Watch Store</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/user-style.css}">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a th:href="@{/user/products}" class="logo">
+            <i class="fas fa-clock"></i> WATCH STORE
+        </a>
+
+        <div class="nav-search">
+            <form th:action="@{/user/products}" method="get">
+                <input type="text" name="search" placeholder="Tìm kiếm đồng hồ..." th:value="${search}">
+                <button type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+
+        <div class="nav-links">
+            <a th:href="@{/user/products}" class="nav-link">
+                <i class="fas fa-th-large"></i> Sản phẩm
+            </a>
+            <a th:href="@{/order/history}" class="nav-link" sec:authorize="isAuthenticated()">
+                <i class="fas fa-history"></i> Đơn hàng
+            </a>
+            <a th:href="@{/admin/dashboard}" class="nav-link" sec:authorize="hasAuthority('ROLE_ADMIN')">
+                <i class="fas fa-user-shield"></i> Quản trị
+            </a>
+            <a th:href="@{/cart}" class="nav-link cart-icon">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-badge" id="cart-count">0</span>
+            </a>
+
+            <!-- Not authenticated -->
+            <div class="auth-buttons" sec:authorize="isAnonymous()">
+                <a th:href="@{/login}" class="btn-auth btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                </a>
+                <a th:href="@{/register}" class="btn-auth btn-register">
+                    <i class="fas fa-user-plus"></i> Đăng ký
+                </a>
+            </div>
+
+            <!-- Authenticated -->
+            <div class="auth-buttons" sec:authorize="isAuthenticated()">
+                <a th:href="@{/profile}" class="nav-link" style="margin-right: 15px; color: #1e293b; font-weight: 500;">
+                    <i class="fas fa-user-circle"></i>
+                    <span sec:authentication="name">Người dùng</span>
+                </a>
+                <form th:action="@{/logout}" method="post" style="display:inline;">
+                    <button type="submit" class="btn-auth btn-logout">
+                        <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <main layout:fragment="content">
+        <!-- Content injected here -->
+    </main>
+
+    <footer class="footer" style="background-color: beige;">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i class="fas fa-clock"></i> WATCH STORE
+            </div>
+            <p style="color: black;">© 2026 Watch Store. Đồng hồ cao cấp chính hãng.</p>
+        </div>
+    </footer>
+
+    <div id="toast" class="toast"></div>
+
+    <script th:inline="javascript">
+        // Global Toast Function
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            if (!t) return;
+
+            let icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            if (type === 'info') icon = 'fa-info-circle';
+
+            t.innerHTML = `<i class="fas ${icon}"></i> <span>${msg}</span>`;
+            t.className = `toast ${type} show`;
+
+            setTimeout(() => {
+                t.className = 'toast';
+            }, 3000);
+        }
+
+        // Auto-show toasts from URL parameters
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('loginSuccess')) showToast('Đăng nhập thành công!');
+            if (urlParams.has('logout')) showToast('Bạn đã đăng xuất.');
+            if (urlParams.has('resetSuccess')) showToast('Đổi mật khẩu thành công!');
+            if (urlParams.has('orderSuccess')) showToast('Đặt hàng thành công!');
+            if (urlParams.has('error')) showToast('Đã xảy ra lỗi, vui lòng thử lại.', 'error');
+            if (urlParams.has('unauthorized')) showToast('Bạn không có quyền truy cập trang này.', 'error');
+        });
+
+        // Update cart count on page load
+        fetch('/cart/count')
+            .then(r => r.ok ? r.json() : { count: 0 })
+            .then(d => {
+                const el = document.getElementById('cart-count');
+                if (el) el.textContent = d.count || 0;
+            })
+            .catch(() => { });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/layout-user}">
+
+<head>
+    <title>Sản phẩm</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="container">
+            <header class="page-header fade-in"
+                style="background-image: url('/images/watch_banner.png'); background-size: cover; background-position: center; height: 350px; border-radius: 30px; margin-bottom: 40px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 1px solid rgba(0,0,0,0.05);">
+            </header>
+
+            <!-- Search & Filter Bar -->
+            <div class="form-card"
+                style="margin-bottom: 2rem; padding: 1.5rem; background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);">
+                <form th:action="@{/user/products}" method="get"
+                    style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
+                    <div class="form-group" style="flex:2; min-width:200px; margin-bottom:0;">
+                        <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;"><i
+                                class="fas fa-search"></i> Tìm kiếm</label>
+                        <input type="text" name="search" th:value="${search}" placeholder="Tên sản phẩm..."
+                            style="width:100%; padding:10px 15px; border:1px solid #eee; border-radius:10px;">
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;"><i
+                                class="fas fa-list"></i> Danh mục</label>
+                        <select name="categoryId"
+                            style="width:100%; padding:10px 15px; border:1px solid #eee; border-radius:10px; cursor:pointer;">
+                            <option value="">Tất cả danh mục</option>
+                            <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"
+                                th:selected="${cat.id == categoryId}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:150px; margin-bottom:0;">
+                        <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;"><i
+                                class="fas fa-copyright"></i> Thương hiệu</label>
+                        <select name="brand"
+                            style="width:100%; padding:10px 15px; border:1px solid #eee; border-radius:10px; cursor:pointer;">
+                            <option value="">Tất cả thương hiệu</option>
+                            <option th:each="b : ${brands}" th:value="${b}" th:text="${b}"
+                                th:selected="${b == brand}"></option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:120px; margin-bottom:0;">
+                        <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;"><i
+                                class="fas fa-sort-amount-down"></i> Sắp xếp</label>
+                        <select name="sortBy"
+                            style="width:100%; padding:10px 15px; border:1px solid #eee; border-radius:10px; cursor:pointer;">
+                            <option value="newest" th:selected="${sortBy == 'newest'}">Mới nhất</option>
+                            <option value="priceAsc" th:selected="${sortBy == 'priceAsc'}">Giá: Thấp đến Cao</option>
+                            <option value="priceDesc" th:selected="${sortBy == 'priceDesc'}">Giá: Cao đến Thấp</option>
+                            <option value="popularity" th:selected="${sortBy == 'popularity'}">Phổ biến</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:120px; margin-bottom:0;">
+                        <label style="font-weight:600; font-size:0.85rem; margin-bottom:0.5rem; display:block;"><i
+                                class="fas fa-tag"></i> Giá tối đa</label>
+                        <input type="number" name="maxPrice" th:value="${maxPrice}" placeholder="VNĐ"
+                            style="width:100%; padding:10px 15px; border:1px solid #eee; border-radius:10px;">
+                    </div>
+                    <button type="submit" class="btn-checkout"
+                        style="padding:11px 25px; width:auto; margin-top:0; border-radius:10px; height:43px;">
+                        <i class="fas fa-filter"></i> Lọc
+                    </button>
+                    <a th:href="@{/user/products}" class="btn-outline"
+                        style="padding:10px 15px; text-decoration:none; display:inline-flex; align-items:center; height:43px; border-radius:10px; background:#f8fafc; border:1px solid #eee; color:#64748b;">
+                        <i class="fas fa-sync-alt"></i>
+                    </a>
+                </form>
+            </div>
+
+            <div class="product-grid">
+                <div th:each="product : ${products}" class="product-card fade-in">
+                    <div class="product-img-wrap">
+                        <a th:href="@{/products/detail/{id}(id=${product.id})}">
+                            <img th:src="@{'/images/' + ${product.image}}" class="product-image"
+                                th:alt="${product.name}" onerror="this.src='/images/default-watch.jpg'">
+                        </a>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category" th:text="${product.category?.name}">Danh mục</div>
+                        <h3 class="product-title">
+                            <a th:href="@{/products/detail/{id}(id=${product.id})}" th:text="${product.name}"
+                                style="color:inherit;"></a>
+                        </h3>
+                        <div class="product-rating" style="margin-bottom: 8px;">
+                            <span th:each="i : ${#numbers.sequence(1, 5)}" 
+                                  th:style="'color: ' + (${ratings != null && ratings[product.id] != null && i <= ratings[product.id]} ? '#ffd700' : '#e2e8f0') + '; font-size: 0.85rem;'">
+                                <i class="fas fa-star"></i>
+                            </span>
+                            <small style="color: #64748b; margin-left: 5px;" 
+                                   th:text="'(' + ${#numbers.formatDecimal(ratings != null && ratings[product.id] != null ? ratings[product.id] : 0, 1, 1)} + ')'"></small>
+                        </div>
+                        <div class="product-price">
+                            <span th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                th:text="${#numbers.formatDecimal(product.discountPrice, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                style="color:#ff4757; font-weight:bold;"></span>
+                            <span th:unless="${product.discountPrice != null && product.discountPrice > 0}"
+                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"></span>
+                            <small th:if="${product.discountPrice != null && product.discountPrice > 0}"
+                                th:text="${#numbers.formatDecimal(product.price, 0, 'COMMA', 0, 'POINT')} + ' VNĐ'"
+                                style="text-decoration:line-through; opacity:0.5; margin-left:10px; font-size:0.8rem;"></small>
+                        </div>
+                        <button class="btn-add-cart" th:onclick="'addToCart(' + ${product.id} + ', this)'"
+                            th:id="'btn-' + ${product.id}">
+                            <i class="fas fa-cart-plus"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+
+                <div th:if="${products.isEmpty()}" class="empty-state" style="grid-column: 1 / -1;">
+                    <i class="fas fa-search"></i>
+                    <h3>Không tìm thấy sản phẩm nào phù hợp</h3>
+                    <p>Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.</p>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            async function addToCart(productId, btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang thêm...';
+                const formData = new FormData();
+                formData.append('quantity', 1);
+                try {
+                    const response = await fetch('/cart/add/' + productId, {
+                        method: 'POST', body: formData
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('cart-count').textContent = data.cartCount;
+                        showToast('✓ Đã thêm vào giỏ hàng!');
+                    } else if (response.status === 400) {
+                        const errorText = await response.text();
+                        showToast(errorText || 'Vượt quá số lượng tồn kho!', 'error');
+                    } else {
+                        showToast('Vui lòng đăng nhập để mua hàng.', 'error');
+                    }
+                } catch (e) {
+                    showToast('Đã xảy ra lỗi, thử lại sau.', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-cart-plus"></i> Thêm vào giỏ';
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>
